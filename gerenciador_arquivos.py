@@ -1,18 +1,19 @@
 import os
 import re
 import time
-import winreg
-from typing import Optional
+from typing import Optional, List
+import winreg # Windows Registry
 import fitz  # PyMuPDF
-import pytesseract
-import io
-from PIL import Image
+import pytesseract # OCR
+import io 
+from PIL import Image # Pillow
+import shutil # Mover arquivos
+import zipfile # Manipular Zips
 
 # --- CONFIGURAÇÃO MANUAL DO TESSERACT ---
-# Garante que o script encontre o executável do Tesseract
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-def obter_caminho_area_de_trabalho() -> str:
+def obter_path_desktop() -> str:
     """
     Lê o Registro do Windows para encontrar o caminho real da Área de Trabalho.
     """
@@ -24,6 +25,23 @@ def obter_caminho_area_de_trabalho() -> str:
         return desktop_path
     except FileNotFoundError:
         return os.path.join(os.path.expanduser('~'), 'Desktop')
+        
+def verificar_novo_download(pasta_download: str, timestamp_antes: float, timeout: int = 20) -> Optional[str]:
+    """Monitora uma pasta por um novo arquivo .zip e retorna seu caminho."""
+    print(f"Monitorando '{os.path.basename(pasta_download)}' por um novo arquivo .zip...")
+    tempo_final = time.time() + timeout
+    while time.time() < tempo_final:
+        for nome_arquivo in os.listdir(pasta_download):
+            if nome_arquivo.lower().endswith('.zip'):
+                caminho_arquivo = os.path.join(pasta_download, nome_arquivo)
+                if os.path.getmtime(caminho_arquivo) > timestamp_antes:
+                    print(f"Download confirmado: Novo arquivo '{nome_arquivo}' encontrado.")
+                    time.sleep(2) # Espera extra para o download finalizar completamente
+                    return caminho_arquivo
+        time.sleep(1)
+    
+    print("Nenhum novo arquivo .zip detectado no tempo limite.")
+    return None
 
 def encontrar_ultimo_pdf_baixado(pasta_ctes: str) -> Optional[str]:
     """
@@ -42,6 +60,29 @@ def encontrar_ultimo_pdf_baixado(pasta_ctes: str) -> Optional[str]:
     
     print(f"Arquivo mais recente encontrado: {os.path.basename(arquivo_mais_recente)}")
     return arquivo_mais_recente
+
+def extrair_e_mover_pdfs_do_zip(caminho_zip: str, pasta_destino: str) -> List[str]:
+    """Extrai todos os PDFs de um arquivo .zip para uma pasta de destino e apaga o .zip."""
+    caminhos_pdfs_extraidos = []
+    try:
+        print(f"Extraindo PDFs de '{os.path.basename(caminho_zip)}' para '{os.path.basename(pasta_destino)}'...")
+        with zipfile.ZipFile(caminho_zip, 'r') as zip_ref:
+            for nome_arquivo_no_zip in zip_ref.namelist():
+                if nome_arquivo_no_zip.lower().endswith('.pdf'):
+                    # Extrai o arquivo para a pasta de destino
+                    zip_ref.extract(nome_arquivo_no_zip, pasta_destino)
+                    caminho_final_pdf = os.path.join(pasta_destino, os.path.basename(nome_arquivo_no_zip))
+                    caminhos_pdfs_extraidos.append(caminho_final_pdf)
+                    print(f" - Arquivo '{os.path.basename(nome_arquivo_no_zip)}' extraído.")
+        
+        # Apaga o arquivo .zip após a extração bem-sucedida
+        os.remove(caminho_zip)
+        print(f"Arquivo '{os.path.basename(caminho_zip)}' removido.")
+
+    except Exception as e:
+        print(f"Ocorreu um erro ao extrair o arquivo zip: {e}")
+
+    return caminhos_pdfs_extraidos
 
 def renomear_pdf_pela_nf(caminho_do_pdf: str):
     """
@@ -92,30 +133,30 @@ def renomear_pdf_pela_nf(caminho_do_pdf: str):
         #--------------------------------------------------------#
         match = None
         #Padrões OCR#
-        match_nf = re.findall(r"NF: [0]*(\d+)", texto_completo_ocr) 
-        match_ne = re.findall(r"NE: [0]*(\d+)", texto_completo_ocr) 
-        match_decl = re.findall(r"Declaração\s*(\d+)", texto_completo_ocr)
-        nfs_juntas = match_nf + match_ne + match_decl
+        numeros_nf = re.findall(r"NF: [0]*(\d+)", texto_completo_ocr)
+        numeros_ne = re.findall(r"NE: [0]*(\d+)", texto_completo_ocr)
+        numeros_decl = re.findall(r"Declaração\s*(\d+)", texto_completo_ocr)
+        nfs_juntas = numeros_nf + numeros_ne + numeros_decl
     
         if nfs_juntas:
             nome_arquivo_base = "-".join(nfs_juntas)
             print(f"Números de Documento encontrados: {nome_arquivo_base}")
             
-            # Define o novo caminho baseado no nome do arquivo combinado
             diretorio = os.path.dirname(caminho_do_pdf)
             novo_nome = f"{nome_arquivo_base}.pdf"
             novo_caminho = os.path.join(diretorio, novo_nome)
             
-            # A lógica de renomeação foi movida para DENTRO deste bloco
             if os.path.exists(novo_caminho):
-                print(f"Aviso: Já existe um arquivo chamado '{novo_nome}'.")
+                print(f"Aviso: Já existe um arquivo chamado '{novo_nome}'. Substituindo o arquivo existente.")
+                doc.close()
+                doc = None
+                os.remove(caminho_do_pdf)
             else:
                 doc.close()
                 doc = None 
-                os.rename(caminho_do_pdf, novo_caminho)
+                shutil.move(caminho_do_pdf, novo_caminho)
                 print(f"Arquivo renomeado para '{novo_nome}'")
         else:
-            # Este 'else' agora corresponde corretamente ao 'if nfs_juntas'
             print("Nenhum padrão de documento ('NF:', 'NE:' ou 'Declaração') foi encontrado no texto do OCR.")
 
     except Exception as e:
