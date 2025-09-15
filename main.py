@@ -84,7 +84,8 @@ if __name__ == "__main__":
     
     path_desktop = gerenciador_arquivos.obter_path_desktop()
     PASTA_CTES = os.path.join(path_desktop, "ctes")
-
+    
+    os.makedirs(PASTA_CTES, exist_ok=True)  
     print(f"Pasta de destino configurada para: {PASTA_CTES}")
 
     lista_de_ctes = obter_lista_ctes()

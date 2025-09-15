@@ -26,7 +26,7 @@ def obter_path_desktop() -> str:
     except FileNotFoundError:
         return os.path.join(os.path.expanduser('~'), 'Desktop')
         
-def verificar_novo_download(pasta_download: str, timestamp_antes: float, timeout: int = 20) -> Optional[str]:
+def verificar_novo_download(pasta_download: str, timestamp_antes: float, timeout: int = 8) -> Optional[str]:
     """Monitora uma pasta por um novo arquivo .zip e retorna seu caminho."""
     print(f"Monitorando '{os.path.basename(pasta_download)}' por um novo arquivo .zip...")
     tempo_final = time.time() + timeout
@@ -45,9 +45,8 @@ def verificar_novo_download(pasta_download: str, timestamp_antes: float, timeout
 
 def encontrar_ultimo_pdf_baixado(pasta_ctes: str) -> Optional[str]:
     """
-    Encontra o PDF mais recente na pasta. Se a pasta não existir, ela é criada.
+    Encontra o PDF mais recente na pasta "ctes" no Desktop.
     """
-    os.makedirs(pasta_ctes, exist_ok=True)
     time.sleep(3) # Pequena pausa para o arquivo ser salvo no disco
 
     arquivos_pdf = [f for f in os.listdir(pasta_ctes) if f.endswith('.pdf')]
@@ -132,12 +131,14 @@ def renomear_pdf_pela_nf(caminho_do_pdf: str):
         print("--- FIM DO TEXTO EXTRAÍDO VIA OCR ---\n")
         #--------------------------------------------------------#
         match = None
+        
         #Padrões OCR#
         numeros_nf = re.findall(r"NF: [0]*(\d+)", texto_completo_ocr)
         numeros_ne = re.findall(r"NE: [0]*(\d+)", texto_completo_ocr)
         numeros_decl = re.findall(r"Declaração\s*(\d+)", texto_completo_ocr)
-        nfs_juntas = numeros_nf + numeros_ne + numeros_decl
-    
+        numeros_fiscais = re.findall(r"Notas Fiscais:?\s*(\d+)", texto_completo_ocr, re.IGNORECASE)
+        nfs_juntas = numeros_nf + numeros_ne + numeros_decl + numeros_fiscais
+
         if nfs_juntas:
             nome_arquivo_base = "-".join(nfs_juntas)
             print(f"Números de Documento encontrados: {nome_arquivo_base}")
