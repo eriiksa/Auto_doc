@@ -47,7 +47,7 @@ def consulta_cte_enfase(driver, cte: str) -> bool:
         print(f"Consulta para o CTE {cte} realizada.")
         
         try:
-            utilidades.wait_and_click(driver, (By.CSS_SELECTOR, "a[title='Download']"), timeout=5)
+            utilidades.wait_and_click(driver, (By.CSS_SELECTOR, "a[title='Download']"), timeout=3)
             print("Download do PDF iniciado.")
             return True 
         except TimeoutException:

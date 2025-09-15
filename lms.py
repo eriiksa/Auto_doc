@@ -2,6 +2,8 @@ from typing import List
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 from gerenciador_arquivos import verificar_novo_download, extrair_e_mover_pdfs_do_zip
 from utilidades import wait_and_click, wait_until_present, wait_until_element_clickable
@@ -48,14 +50,20 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
         time.sleep(1)
         wait_and_click(driver, (By.ID, "consultar"), timeout=15)
 
-        botao_imagem = wait_until_element_clickable(
-            driver, (By.XPATH, "//a[@permission='imagem' and contains(., 'Imagem')]"))
+        wait = WebDriverWait(driver, 3)
+        botao_imagem = wait_until_element_clickable(driver, (By.XPATH, "//a[@permission='imagem' and contains(., 'Imagem')]"))
 
+        elemento_encontrado = wait.until( EC.presence_of_element_located((By.XPATH, "//a[@permission='imagem'] | //span[contains(text(), 'Arquivo não encontrado.')]")))
+        if "Arquivo não encontrado" in elemento_encontrado.text:
+            print("FALHA: Mensagem 'Arquivo não encontrado.' detectada no LMS.")
+            return [] # Retorna lista vazia (falha)
+        botao_imagem = elemento_encontrado
+        
         timestamp_antes_do_clique = time.time()
         botao_imagem.click()
         print("Botão 'Imagem' clicado. Verificando o download do .zip...")
 
-        caminho_zip = verificar_novo_download(pasta_trabalho, timestamp_antes_do_clique, timeout=30)
+        caminho_zip = verificar_novo_download(pasta_trabalho, timestamp_antes_do_clique)
 
         if caminho_zip:
             return extrair_e_mover_pdfs_do_zip(caminho_zip, pasta_trabalho)
@@ -63,8 +71,7 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
             return []
 
     except TimeoutException:
-        print(
-            f"FALHA: Não foi possível encontrar o botão 'Imagem' no LMS para o CTE {cte}.")
+        print(f"FALHA: Não foi possível encontrar nem o botão 'Imagem' nem a mensagem de erro no LMS para o CTE {cte}.")
         return []
     except Exception as e:
         print(f"Ocorreu um erro ao consultar o CTE no LMS: {e}")
