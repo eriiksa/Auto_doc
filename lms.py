@@ -4,7 +4,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
+import time 
 from gerenciador_arquivos import verificar_novo_download, extrair_e_mover_pdfs_do_zip
 from utilidades import wait_and_click, wait_until_present, wait_until_element_clickable
 

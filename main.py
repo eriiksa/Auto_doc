@@ -81,7 +81,9 @@ if __name__ == "__main__":
     pwd_enfase = "fedex0955"
     user_lms = "eriksb"
     pwd_lms = "1234fedex.2025"
-    
+    user_tivit = "jessica.infante"
+    pwd_tivit = "#We05je06"
+
     path_desktop = gerenciador_arquivos.obter_path_desktop()
     PASTA_CTES = os.path.join(path_desktop, "ctes")
     
