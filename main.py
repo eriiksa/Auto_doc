@@ -8,6 +8,7 @@ from selenium.common.exceptions import TimeoutException
 import gerenciador_arquivos
 import utilidades 
 from lms import login_lms, consulta_sim, consulta_lms, rerun_consulta
+from tivit import login_tivit, navegar_para_consulta_tivit, consulta_tivit
 
 def login_enfase(driver, user_enfase, pwd_enfase):
     """Realiza o login no sistema Enfase e navega até a tela de relatório."""
@@ -84,9 +85,9 @@ if __name__ == "__main__":
     user_tivit = "jessica.infante"
     pwd_tivit = "#We05je06"
 
+    #Configuração pasta de download
     path_desktop = gerenciador_arquivos.obter_path_desktop()
     PASTA_CTES = os.path.join(path_desktop, "ctes")
-    
     os.makedirs(PASTA_CTES, exist_ok=True)  
     print(f"Pasta de destino configurada para: {PASTA_CTES}")
 
@@ -101,6 +102,7 @@ if __name__ == "__main__":
         
         aba_enfase = driver.current_window_handle
         aba_lms = None
+        aba_tivit = None
 
         try:
             login_enfase(driver, user_enfase, pwd_enfase)
@@ -116,28 +118,38 @@ if __name__ == "__main__":
                         gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf)
                 else:
                     print(f"CTE {cte_atual} não está no enfase. Verificando no LMS...")
-                    
                     if aba_lms is None:
                         driver.execute_script("window.open('');")
                         aba_lms = driver.window_handles[-1]
                         driver.switch_to.window(aba_lms)
                         login_lms(driver, user_lms, pwd_lms)
                         consulta_sim(driver)
+                        
                     else:
                         driver.switch_to.window(aba_lms)
                         rerun_consulta(driver)
-                        
-                    caminhos_pdfs_extraidos = consulta_lms(driver, cte_atual, PASTA_CTES)
-
-
-
-                    if caminhos_pdfs_extraidos:
-                        print(f"{len(caminhos_pdfs_extraidos)} PDF(s) extraídos do LMS para o CTE {cte_atual}.")
-                        for pdf_path in caminhos_pdfs_extraidos:
-                            gerenciador_arquivos.renomear_pdf_pela_nf(pdf_path)
-                    else:
-                        ctes_nao_encontrados.append(cte_atual)
-
+                        caminhos_pdfs_lms = consulta_lms(driver, cte_atual, PASTA_CTES)                    
+                        if caminhos_pdfs_lms:
+                            print(f"PDF extraído do LMS para o CTE {cte_atual}.")
+                            for caminho_pdf_lms in caminhos_pdfs_lms:
+                                gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_lms)
+                        else:
+                            if aba_tivit is None:
+                                print(f"CTE {cte_atual} não está no LMS. Verificando no Tivit...")
+                                driver.execute_script("window.open('');")
+                                aba_tivit = driver.window_handles[-1]
+                                driver.switch_to.window(aba_tivit)
+                                login_tivit(driver, user_tivit, pwd_tivit)
+                                navegar_para_consulta_tivit(driver)
+                            else:
+                                driver.switch_to.window(aba_tivit)
+                                caminho_pdf_tivit = consulta_tivit(driver, cte_atual, PASTA_CTES)
+                                if caminho_pdf_tivit:
+                                    print(f"PDF baixado do Tivit para o CTE {cte_atual}.")
+                                    gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_tivit)
+                                else:
+                                    print(f"CTE {cte_atual} não encontrado em nenhum sistema.")
+                                    ctes_nao_encontrados.append(cte_atual)
                 time.sleep(2)
                 
         except Exception as e:

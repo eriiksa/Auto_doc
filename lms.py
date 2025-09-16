@@ -51,14 +51,17 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
         wait_and_click(driver, (By.ID, "consultar"), timeout=15)
 
         wait = WebDriverWait(driver, 3)
-        botao_imagem = wait_until_element_clickable(driver, (By.XPATH, "//a[@permission='imagem' and contains(., 'Imagem')]"))
 
-        elemento_encontrado = wait.until( EC.presence_of_element_located((By.XPATH, "//a[@permission='imagem'] | //span[contains(text(), 'Arquivo não encontrado.')]")))
+        elemento_encontrado = wait.until(
+            EC.presence_of_element_located(
+                (By.XPATH, "//a[@permission='imagem'] | //span[contains(text(), 'Arquivo não encontrado.')]")
+            )
+        )
         if "Arquivo não encontrado" in elemento_encontrado.text:
             print("FALHA: Mensagem 'Arquivo não encontrado.' detectada no LMS.")
-            return [] # Retorna lista vazia (falha)
+            return []
+
         botao_imagem = elemento_encontrado
-        
         timestamp_antes_do_clique = time.time()
         botao_imagem.click()
         print("Botão 'Imagem' clicado. Verificando o download do .zip...")
@@ -82,4 +85,4 @@ def rerun_consulta(driver):
     elemento_consulta = wait_until_present(
         driver, (By.XPATH, "//a[@data-ng-click='aba.click()' and contains(., 'Consulta')]"), timeout=15)
     driver.execute_script("arguments[0].click();", elemento_consulta)
-    time.sleep(2)
+    time.sleep(1) # se der problema,voltar pro 2

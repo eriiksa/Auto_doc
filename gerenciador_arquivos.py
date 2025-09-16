@@ -7,8 +7,9 @@ import fitz  # PyMuPDF
 import pytesseract # OCR
 import io 
 from PIL import Image # Pillow
-import shutil # Mover arquivos
-import zipfile # Manipular Zips
+import shutil # Mover arquivos 
+import zipfile # Manipular Zips para extrair PDFs do lms
+import requests # Baixar arquivos via HTTP para o tivit
 
 # --- CONFIGURAÇÃO MANUAL DO TESSERACT ---
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
@@ -165,3 +166,29 @@ def renomear_pdf_pela_nf(caminho_do_pdf: str):
     finally:
         if doc:
             doc.close()
+def baixar_pdf_de_url(url_pdf: str, pasta_destino: str, nome_arquivo_base: str) -> Optional[str]:
+    """
+    Baixa um arquivo PDF a partir de uma URL e o salva na pasta de destino.
+    Retorna o caminho do arquivo salvo em caso de sucesso.
+    """
+    try:
+        print(f"Baixando PDF da URL: {url_pdf[:50]}...") # Mostra o início da URL
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        resposta = requests.get(url_pdf, headers=headers, timeout=30)
+        resposta.raise_for_status()  # Gera um erro se o download falhar (ex: 404)
+
+        # Garante que o nome do arquivo seja seguro para o sistema de arquivos
+        nome_arquivo_seguro = f"{re.sub(r'[^a-zA-Z0-9]', '', nome_arquivo_base)}.pdf"
+        caminho_completo = os.path.join(pasta_destino, nome_arquivo_seguro)
+
+        with open(caminho_completo, 'wb') as f:
+            f.write(resposta.content)
+        
+        print(f"Arquivo PDF salvo com sucesso em: {caminho_completo}")
+        return caminho_completo
+
+    except requests.exceptions.RequestException as e:
+        print(f"ERRO: Falha ao baixar o PDF da URL. Erro: {e}")
+        return None

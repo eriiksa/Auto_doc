@@ -1,5 +1,7 @@
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.edge.options import Options as EdgeOptions
@@ -46,9 +48,12 @@ def wait_until_element_clickable(driver: WebDriver, locator: tuple, timeout: int
 
 
 def element_is_present(driver: WebDriver, locator: tuple, timeout: int = 3) -> bool:
-    """Verifica se um elemento está presente na página dentro do tempo limite."""
+    """
+    Verifica se um elemento está presente na página dentro de um tempo limite,
+    usando uma espera explícita para evitar erros.
+    """
     try:
-        driver.find_element(*locator)
+        WebDriverWait(driver, timeout).until(EC.presence_of_element_located(locator))
         return True
-    except:
+    except TimeoutException:
         return False
