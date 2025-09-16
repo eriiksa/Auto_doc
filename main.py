@@ -100,60 +100,75 @@ if __name__ == "__main__":
         print(f"\n{len(lista_de_ctes)} CTEs para processar. Iniciando automação...")
         driver = utilidades.get_driver(PASTA_CTES) # Define a pasta de download
         
+        # Gerenciadores de abas
         aba_enfase = driver.current_window_handle
-        aba_lms = None
-        aba_tivit = None
-
+        aba_lms, lms_logado = None, False
+        aba_tivit, tivit_logado = None, False
+        
+        #----------------------ENFASE-------------------------------#
         try:
             login_enfase(driver, user_enfase, pwd_enfase)
             
             for cte_atual in lista_de_ctes:
                 driver.switch_to.window(aba_enfase)
-                sucesso_enfase = consulta_cte_enfase(driver, cte=cte_atual)
+
                 
-                if sucesso_enfase:
+                if consulta_cte_enfase(driver, cte=cte_atual):
                     print("Aguardando download...")
                     caminho_pdf = gerenciador_arquivos.encontrar_ultimo_pdf_baixado(PASTA_CTES)
                     if caminho_pdf:
                         gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf)
+                    time.sleep(1)
+                    continue
+                #----------------------LMS-------------------------------#
                 else:
                     print(f"CTE {cte_atual} não está no enfase. Verificando no LMS...")
-                    if aba_lms is None:
-                        driver.execute_script("window.open('');")
-                        aba_lms = driver.window_handles[-1]
+                    driver.execute_script("window.open('');")
+                    aba_lms = driver.window_handles[-1]
+                    if not lms_logado:
                         driver.switch_to.window(aba_lms)
                         login_lms(driver, user_lms, pwd_lms)
                         consulta_sim(driver)
-                        
+                        consulta_lms(driver, cte_atual, PASTA_CTES)
+                        lms_logado = True
                     else:
                         driver.switch_to.window(aba_lms)
                         rerun_consulta(driver)
+
                         caminhos_pdfs_lms = consulta_lms(driver, cte_atual, PASTA_CTES)                    
+                        
                         if caminhos_pdfs_lms:
-                            print(f"PDF extraído do LMS para o CTE {cte_atual}.")
-                            for caminho_pdf_lms in caminhos_pdfs_lms:
-                                gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_lms)
+                            print(f"PDF(s) extraído(s) do LMS para o CTE {cte_atual}.")
+                            for pdf_path in caminhos_pdfs_lms:
+                                gerenciador_arquivos.renomear_pdf_pela_nf(pdf_path)
+                        time.sleep(2)
+                        continue # SUCESSO: Pula para o próximo CTE
+                        
+                        #----------------------TIVIT-------------------------------#
+                    print(f"CTE {cte_atual} não está no LMS. Verificando no Tivit...")
+                    driver.execute_script("window.open('');")
+                    aba_tivit = driver.window_handles[-2]
+                    driver.switch_to.window(aba_tivit)
+
+                    if not tivit_logado:
+                        login_tivit(driver, user_tivit, pwd_tivit)
+                        navegar_para_consulta_tivit(driver)
+                        consulta_tivit(driver, cte_atual, PASTA_CTES)
+                        tivit_logado = True
+                    else:
+                        driver.switch_to.window(aba_tivit)        
+
+                        caminho_pdf_tivit = consulta_tivit(driver, cte_atual, PASTA_CTES)
+                        if caminho_pdf_tivit:
+                             print(f"PDF baixado do Tivit para o CTE {cte_atual}.")
+                             gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_tivit)
                         else:
-                            if aba_tivit is None:
-                                print(f"CTE {cte_atual} não está no LMS. Verificando no Tivit...")
-                                driver.execute_script("window.open('');")
-                                aba_tivit = driver.window_handles[-1]
-                                driver.switch_to.window(aba_tivit)
-                                login_tivit(driver, user_tivit, pwd_tivit)
-                                navegar_para_consulta_tivit(driver)
-                            else:
-                                driver.switch_to.window(aba_tivit)
-                                caminho_pdf_tivit = consulta_tivit(driver, cte_atual, PASTA_CTES)
-                                if caminho_pdf_tivit:
-                                    print(f"PDF baixado do Tivit para o CTE {cte_atual}.")
-                                    gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_tivit)
-                                else:
-                                    print(f"CTE {cte_atual} não encontrado em nenhum sistema.")
-                                    ctes_nao_encontrados.append(cte_atual)
-                time.sleep(2)
-                
+                            print(f"CTE {cte_atual} não encontrado em nenhum sistema.")
+                            ctes_nao_encontrados.append(cte_atual)
+                time.sleep(2) # Pausa entre CTEs para evitar sobrecarga   
         except Exception as e:
             print(f"Ocorreu um erro fatal no script: {e}")
+            #----------------------FINALIZAÇÃO-------------------------------#CJR789263
         finally:
             print("\n" + "="*50)
             print("--- PROCESSO FINALIZADO ---")

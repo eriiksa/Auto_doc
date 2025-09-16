@@ -20,19 +20,22 @@ def login_lms(driver, user: str, pwd: str):
         driver, (By.XPATH, "//a[contains(., 'Eu concordo') and @href='#']"))
     wait_and_click(
         driver, (By.CSS_SELECTOR, ".btn.btn-primary.btn-lg[value='Entrar']"))
-    print("Login no LMS realizado com sucesso.")
-    time.sleep(5)
-
+    time.sleep(5)  # Espera a página carregar completamente
 
 def consulta_sim(driver):
     """Navega até a tela de consulta SIM no LMS."""
-    wait_and_click(
-        driver, (By.XPATH, "//button[@class='navbar-toggle' and contains(@ng-click, 'toggleMenu')]"), timeout=15)
-    wait_and_click(driver, (By.XPATH, "//a[contains(text(),'SIM') ]"))
-    wait_and_click(
-        driver, (By.XPATH, "//a[contains(text(),'Consultas e Relatórios') ]"))
-    wait_and_click(
-        driver, (By.XPATH, "//a[contains(text(),'Consultar Localizações de Mercadoria (Novo)') ]"))
+    toggle_menu = wait_until_present(driver, (By.XPATH, "//button[@class='navbar-toggle' and contains(@ng-click, 'toggleMenu')]"), timeout=20)
+    print("Login no LMS realizado com sucesso.")
+    toggle_menu.click()
+
+    botao_sim = wait_until_present(driver, (By.XPATH, "//a[contains(text(),'SIM') ]"))
+    botao_sim.click()
+    
+    consultas_relatorios = wait_until_present(driver, (By.XPATH, "//a[contains(text(),'Consultas e Relatórios') ]"))
+    consultas_relatorios.click()
+
+    consultar_localizacoes = wait_until_present(driver, (By.XPATH, "//a[contains(text(),'Consultar Localizações de Mercadoria (Novo)') ]"))
+    consultar_localizacoes.click()
 
 
 def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
@@ -49,13 +52,13 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
         campo_docto.send_keys(cte.replace("-", "").strip() + Keys.ENTER)
         time.sleep(1)
         wait_and_click(driver, (By.ID, "consultar"), timeout=15)
+        time.sleep(2)  
+        wait = WebDriverWait(driver, 5) #5s para acompanhar delay do LMS
 
-        wait = WebDriverWait(driver, 3)
-
+        xpath_combinado = "//*[contains(text(), 'Arquivo não encontrado')] | //a[@permission='imagem']"
+        
         elemento_encontrado = wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//a[@permission='imagem'] | //span[contains(text(), 'Arquivo não encontrado.')]")
-            )
+            EC.presence_of_element_located((By.XPATH, xpath_combinado))
         )
         if "Arquivo não encontrado" in elemento_encontrado.text:
             print("FALHA: Mensagem 'Arquivo não encontrado.' detectada no LMS.")

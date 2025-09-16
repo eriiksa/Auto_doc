@@ -26,18 +26,18 @@ def obter_path_desktop() -> str:
         return desktop_path
     except FileNotFoundError:
         return os.path.join(os.path.expanduser('~'), 'Desktop')
-        
-def verificar_novo_download(pasta_download: str, timestamp_antes: float, timeout: int = 3) -> Optional[str]:
-    """Monitora uma pasta por um novo arquivo .zip e retorna seu caminho."""
-    print(f"Monitorando '{os.path.basename(pasta_download)}' por um novo arquivo .zip...")
+
+def verificar_novo_download(pasta_download: str, timestamp_antes: float, timeout: int = 5) -> Optional[str]:
+    """Monitora uma pasta por um novo arquivo .zip e retorna seu caminho ou None."""
+    print(f"Monitorando '{os.path.basename(pasta_download)}' por um novo arquivo .zip (máx. {timeout}s)...")
     tempo_final = time.time() + timeout
     while time.time() < tempo_final:
         for nome_arquivo in os.listdir(pasta_download):
-            if nome_arquivo.lower().endswith('.zip'):
+            if nome_arquivo.lower().endswith('.zip') and not nome_arquivo.lower().endswith('.crdownload'):
                 caminho_arquivo = os.path.join(pasta_download, nome_arquivo)
                 if os.path.getmtime(caminho_arquivo) > timestamp_antes:
                     print(f"Download confirmado: Novo arquivo '{nome_arquivo}' encontrado.")
-                    time.sleep(2) # Espera extra para o download finalizar completamente
+                    time.sleep(2)
                     return caminho_arquivo
         time.sleep(1)
     
@@ -172,15 +172,18 @@ def baixar_pdf_de_url(url_pdf: str, pasta_destino: str, nome_arquivo_base: str) 
     Retorna o caminho do arquivo salvo em caso de sucesso.
     """
     try:
-        print(f"Baixando PDF da URL: {url_pdf[:50]}...") # Mostra o início da URL
+        print(f"Baixando PDF da URL: {url_pdf[:50]}...")
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        resposta = requests.get(url_pdf, headers=headers, timeout=30)
-        resposta.raise_for_status()  # Gera um erro se o download falhar (ex: 404)
+        
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
+        resposta = requests.get(url_pdf, headers=headers, timeout=30, verify=False)
+        resposta.raise_for_status()
 
-        # Garante que o nome do arquivo seja seguro para o sistema de arquivos
-        nome_arquivo_seguro = f"{re.sub(r'[^a-zA-Z0-9]', '', nome_arquivo_base)}.pdf"
+        nome_arquivo_seguro = f"{re.sub(r'[^a-zA-Z0-9-]', '', nome_arquivo_base)}.pdf"
         caminho_completo = os.path.join(pasta_destino, nome_arquivo_seguro)
 
         with open(caminho_completo, 'wb') as f:

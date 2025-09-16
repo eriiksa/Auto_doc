@@ -1,11 +1,11 @@
+from typing import Optional
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from typing import Optional
 import time
-import os
 import utilidades
 import gerenciador_arquivos
 
@@ -15,13 +15,10 @@ def login_tivit(driver, user: str, pwd: str):
     print("Iniciando login no Tivit...")
     driver.get("https://ecm.tivit.com/portal/principal_rh.aspx")
 
-    utilidades.wait_until_present(
-        driver, (By.ID, "txtCliente")).send_keys("TNT")
-    utilidades.wait_until_present(
-        driver, (By.ID, "txtUsuario")).send_keys(user)
+    utilidades.wait_until_present( driver, (By.ID, "txtCliente")).send_keys("TNT")
+    utilidades.wait_until_present( driver, (By.ID, "txtUsuario")).send_keys(user)
     utilidades.wait_until_present(driver, (By.ID, "txtSenha")).send_keys(pwd)
-    utilidades.wait_until_element_clickable(
-        driver, (By.CSS_SELECTOR, "button.btn.btn-primary")).click()
+    utilidades.wait_until_element_clickable(driver, (By.CSS_SELECTOR, "button.btn.btn-primary")).click()
 
     print("Login no Tivit realizado com sucesso.")
 
@@ -110,28 +107,3 @@ def consulta_tivit(driver, cte_atual: str, pasta_trabalho: str):
         print(f"ERRO: Ocorreu um erro ao consultar o CTE {cte_atual}: {e}")
         return None
 
-
-if __name__ == "__main__":
-
-    USER_TIVIT_TESTE = "jessica.infante"
-    PWD_TIVIT_TESTE = "#We05je06"
-
-    try:
-        path_desktop = gerenciador_arquivos.obter_path_desktop()
-        PASTA_TESTE = os.path.join(path_desktop, "ctes")
-        os.makedirs(PASTA_TESTE, exist_ok=True)
-        print(f"Pasta de teste configurada para: {PASTA_TESTE}")
-        driver = utilidades.get_driver(PASTA_TESTE)
-
-        login_tivit(driver, USER_TIVIT_TESTE, PWD_TIVIT_TESTE)
-        navegar_para_consulta_tivit(driver)
-
-        caminho_do_pdf_baixado = consulta_tivit(driver, "CJR789263", PASTA_TESTE)
-        
-        if caminho_do_pdf_baixado:
-            print(f"\nIniciando processo de renomeação para: {os.path.basename(caminho_do_pdf_baixado)}")
-            gerenciador_arquivos.renomear_pdf_pela_nf(caminho_do_pdf_baixado)
-        print("\n--- Teste finalizado com sucesso! O navegador permanecerá aberto. ---")
-        
-    except Exception as e:
-        print(f"\n--- Ocorreu um erro durante o teste: {e} ---")
