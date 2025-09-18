@@ -112,59 +112,72 @@ if __name__ == "__main__":
             for cte_atual in lista_de_ctes:
                 driver.switch_to.window(aba_enfase)
 
-                
+                # ETAPA 1: Tentar encontrar no ENFASE
                 if consulta_cte_enfase(driver, cte=cte_atual):
-                    print("Aguardando download...")
+                    print("Aguardando download do Enfase...")
                     caminho_pdf = gerenciador_arquivos.encontrar_ultimo_pdf_baixado(PASTA_CTES)
                     if caminho_pdf:
                         gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf)
                     time.sleep(1)
-                    continue
-                #----------------------LMS-------------------------------#
-                else:
-                    print(f"CTE {cte_atual} não está no enfase. Verificando no LMS...")
-                    driver.execute_script("window.open('');")
-                    aba_lms = driver.window_handles[-1]
-                    if not lms_logado:
-                        driver.switch_to.window(aba_lms)
-                        login_lms(driver, user_lms, pwd_lms)
-                        consulta_sim(driver)
-                        consulta_lms(driver, cte_atual, PASTA_CTES)
-                        lms_logado = True
-                    else:
-                        driver.switch_to.window(aba_lms)
-                        rerun_consulta(driver)
+                    continue  # SUCESSO: Pula para o próximo CTE
 
-                        caminhos_pdfs_lms = consulta_lms(driver, cte_atual, PASTA_CTES)                    
-                        
-                        if caminhos_pdfs_lms:
-                            print(f"PDF(s) extraído(s) do LMS para o CTE {cte_atual}.")
-                            for pdf_path in caminhos_pdfs_lms:
-                                gerenciador_arquivos.renomear_pdf_pela_nf(pdf_path)
-                        time.sleep(2)
-                        continue # SUCESSO: Pula para o próximo CTE
-                        
-                        #----------------------TIVIT-------------------------------#
-                    print(f"CTE {cte_atual} não está no LMS. Verificando no Tivit...")
+                # Se chegou aqui, não encontrou no Enfase.
+                print(f"CTE {cte_atual} não encontrado no Enfase. Verificando no LMS...")
+
+                # ETAPA 2: Tentar encontrar no LMS
+                # Gerencia a aba e o login do LMS
+                if not aba_lms:
+                    abas_antes = set(driver.window_handles)
                     driver.execute_script("window.open('');")
-                    aba_tivit = driver.window_handles[-2]
+                    aba_lms = (set(driver.window_handles) - abas_antes).pop()
+                    driver.switch_to.window(aba_lms)
+                    login_lms(driver, user_lms, pwd_lms)
+                    consulta_sim(driver)
+                    lms_logado = True
+                else:
+                    # Para os próximos CTEs, apenas troca de aba e volta para a consulta
+                    driver.switch_to.window(aba_lms)
+                    rerun_consulta(driver)
+
+                # Executa a consulta no LMS (apenas uma vez) e processa o resultado
+                caminhos_pdfs_lms = consulta_lms(driver, cte_atual, PASTA_CTES)
+                if caminhos_pdfs_lms:
+                    print(f"PDF(s) extraído(s) do LMS para o CTE {cte_atual}.")
+                    for pdf_path in caminhos_pdfs_lms:
+                        gerenciador_arquivos.renomear_pdf_pela_nf(pdf_path)
+                    time.sleep(1)
+                    continue  
+
+                # Se chegou aqui, não encontrou no LMS.
+                print(f"CTE {cte_atual} não encontrado no LMS. Verificando no Tivit...")
+
+                # ETAPA 3: Tentar encontrar no TIVIT
+                # Gerencia a aba e o login do Tivit
+                if not aba_tivit:
+                    abas_antes = set(driver.window_handles)
+                    driver.execute_script("window.open('');")
+                    aba_tivit = (set(driver.window_handles) - abas_antes).pop()
+                    driver.switch_to.window(aba_tivit)
+                    login_tivit(driver, user_tivit, pwd_tivit)
+                    navegar_para_consulta_tivit(driver)
+                    tivit_logado = True
+                else:
                     driver.switch_to.window(aba_tivit)
 
-                    if not tivit_logado:
-                        login_tivit(driver, user_tivit, pwd_tivit)
-                        navegar_para_consulta_tivit(driver)
-                        consulta_tivit(driver, cte_atual, PASTA_CTES)
-                        tivit_logado = True
-                    else:
-                        driver.switch_to.window(aba_tivit)        
+                # Executa a consulta no Tivit (apenas uma vez) e processa o resultado
+                caminho_pdf_tivit = consulta_tivit(driver, cte_atual, PASTA_CTES)
+                if caminho_pdf_tivit:
+                    print(f"PDF baixado do Tivit para o CTE {cte_atual}.")
+                    gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_tivit)
+                    time.sleep(1)
+                    continue  # SUCESSO: Pula para o próximo CTE
 
-                        caminho_pdf_tivit = consulta_tivit(driver, cte_atual, PASTA_CTES)
-                        if caminho_pdf_tivit:
-                             print(f"PDF baixado do Tivit para o CTE {cte_atual}.")
-                             gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_tivit)
-                        else:
-                            print(f"CTE {cte_atual} não encontrado em nenhum sistema.")
-                            ctes_nao_encontrados.append(cte_atual)
+                # ETAPA 4: FALHA FINAL
+                # Se chegou até aqui, o CTE não foi encontrado em nenhum sistema.
+                print(f"ATENÇÃO: CTE {cte_atual} não encontrado em nenhum dos sistemas.")
+                ctes_nao_encontrados.append(cte_atual)
+
+                time.sleep(1)
                 time.sleep(2) # Pausa entre CTEs para evitar sobrecarga   
         except Exception as e:
             print(f"Ocorreu um erro fatal no script: {e}")

@@ -27,7 +27,7 @@ def obter_path_desktop() -> str:
     except FileNotFoundError:
         return os.path.join(os.path.expanduser('~'), 'Desktop')
 
-def verificar_novo_download(pasta_download: str, timestamp_antes: float, timeout: int = 5) -> Optional[str]:
+def verificar_novo_download(pasta_download: str, timestamp_antes: float, timeout: int = 3) -> Optional[str]:
     """Monitora uma pasta por um novo arquivo .zip e retorna seu caminho ou None."""
     print(f"Monitorando '{os.path.basename(pasta_download)}' por um novo arquivo .zip (máx. {timeout}s)...")
     tempo_final = time.time() + timeout
@@ -183,8 +183,8 @@ def baixar_pdf_de_url(url_pdf: str, pasta_destino: str, nome_arquivo_base: str) 
         resposta = requests.get(url_pdf, headers=headers, timeout=30, verify=False)
         resposta.raise_for_status()
 
-        nome_arquivo_seguro = f"{re.sub(r'[^a-zA-Z0-9-]', '', nome_arquivo_base)}.pdf"
-        caminho_completo = os.path.join(pasta_destino, nome_arquivo_seguro)
+        nome_arquivo_temporario = f"temp_tivit_{nome_arquivo_base}_{int(time.time())}.pdf"
+        caminho_completo = os.path.join(pasta_destino, nome_arquivo_temporario)
 
         with open(caminho_completo, 'wb') as f:
             f.write(resposta.content)

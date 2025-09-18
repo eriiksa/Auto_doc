@@ -4,10 +4,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from typing import Optional
 import time
 import utilidades
 import gerenciador_arquivos
+import requests
 
 
 def login_tivit(driver, user: str, pwd: str):
@@ -73,24 +73,26 @@ def consulta_tivit(driver, cte_atual: str, pasta_trabalho: str):
             f"Consulta para o CTE {cte_atual} realizada. Verificando resultado...")
 
         aba_principal = driver.current_window_handle
+        abas_antes_do_clique = driver.window_handles
         try:
             utilidades.wait_and_click(
                 driver, (By.CSS_SELECTOR, "img[title='Clique para efetuar o download da Imagem']"), timeout=5)
             print("Lupa de download clicada. Aguardando nova aba...")
-            time.sleep(3)  # Pausa para a nova aba carregar
+            wait = WebDriverWait(driver, 15)
+            wait.until(EC.number_of_windows_to_be(len(driver.window_handles)))
 
-            url_pdf_download = [
-                aba for aba in driver.window_handles if aba != aba_principal][0]
-            driver.switch_to.window(url_pdf_download)
+            aba_pdf_handle = [aba for aba in driver.window_handles if aba not in abas_antes_do_clique][0]
+            driver.switch_to.window(aba_pdf_handle)
 
             url_pdf_download = driver.current_url
+            print("Iniciando download do PDF em segundo plano...")
             caminho_salvo = gerenciador_arquivos.baixar_pdf_de_url(
                 url_pdf_download, pasta_trabalho, cte_clean)
-
             driver.close()
             driver.switch_to.window(aba_principal)
 
             return caminho_salvo
+
         except TimeoutException:
             alerta_locator = (
                 By.XPATH, "//span[@id='ContentPlaceHolder1_lblAlerta' and contains(text(), 'Pesquisa não localizada.')]")

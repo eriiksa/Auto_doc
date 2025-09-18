@@ -47,13 +47,14 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
     try:
         campo_docto = wait_until_element_clickable(
             driver, (By.ID, "doctoServico"))
+        time.sleep(1)
         campo_docto.send_keys(Keys.CONTROL + 'a')
         campo_docto.send_keys(Keys.DELETE)
         campo_docto.send_keys(cte.replace("-", "").strip() + Keys.ENTER)
         time.sleep(1)
         wait_and_click(driver, (By.ID, "consultar"), timeout=15)
         time.sleep(2)  
-        wait = WebDriverWait(driver, 5) #5s para acompanhar delay do LMS
+        wait = WebDriverWait(driver, 3) #3s para acompanhar delay do LMS
 
         xpath_combinado = "//*[contains(text(), 'Arquivo não encontrado')] | //a[@permission='imagem']"
         
@@ -88,4 +89,4 @@ def rerun_consulta(driver):
     elemento_consulta = wait_until_present(
         driver, (By.XPATH, "//a[@data-ng-click='aba.click()' and contains(., 'Consulta')]"), timeout=15)
     driver.execute_script("arguments[0].click();", elemento_consulta)
-    time.sleep(1) # se der problema,voltar pro 2
+    time.sleep(1) # se der problema,voltar pro 2s
