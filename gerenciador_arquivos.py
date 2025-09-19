@@ -1,3 +1,4 @@
+from utilidades import resource_path
 import os
 import re
 import time
@@ -11,8 +12,8 @@ import shutil # Mover arquivos
 import zipfile # Manipular Zips para extrair PDFs do lms
 import requests # Baixar arquivos via HTTP para o tivit
 
-# --- CONFIGURAÇÃO MANUAL DO TESSERACT ---
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+tesseract_path = resource_path(os.path.join('Tesseract-OCR', 'tesseract.exe'))
+pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
 def obter_path_desktop() -> str:
     """

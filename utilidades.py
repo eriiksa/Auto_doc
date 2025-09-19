@@ -7,7 +7,17 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.edge.service import Service as EdgeService
 from selenium import webdriver
+import sys
+import os
 
+def resource_path(relative_path):
+    """ Retorna o caminho absoluto para o recurso, funcionando para dev e para o .exe do PyInstaller """
+    try:
+        base_path = sys._MEIPASS # type: ignore
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 def get_driver(pasta_download: str) -> WebDriver:
     """Configura e inicializa o navegador Edge com uma pasta de download específica."""
@@ -16,17 +26,12 @@ def get_driver(pasta_download: str) -> WebDriver:
     options.add_experimental_option("detach", True)
     prefs = {"download.default_directory": pasta_download}
     options.add_experimental_option("prefs", prefs)
+    
+    service = EdgeService() 
+    driver = webdriver.Edge(service=service, options=options)
 
-    try:
-        service = EdgeService()
-        driver = webdriver.Edge(service=service, options=options)
-    except Exception:
-        service = EdgeService(executable_path="msedgedriver.exe")
-        driver = webdriver.Edge(service=service, options=options)
-
-    driver.maximize_window()
+    #driver.maximize_window()
     return driver
-
 
 def wait_and_click(driver: WebDriver, locator: tuple, timeout: int = 20) -> None:
     """Espera um elemento se tornar clicável e então clica nele."""

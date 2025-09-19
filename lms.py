@@ -53,16 +53,24 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
         campo_docto.send_keys(cte.replace("-", "").strip() + Keys.ENTER)
         time.sleep(1)
         wait_and_click(driver, (By.ID, "consultar"), timeout=15)
-        time.sleep(2)  
-        wait = WebDriverWait(driver, 3) #3s para acompanhar delay do LMS
 
-        xpath_combinado = "//*[contains(text(), 'Arquivo não encontrado')] | //a[@permission='imagem']"
+        XPATH_LOADER = "//img[@src='/lmsa/img/ajax-loader.gif']"
+        # Espera o loader por 90s
+        wait = WebDriverWait(driver, 90)
+        wait.until(EC.invisibility_of_element_located((By.XPATH, XPATH_LOADER)))
         
-        elemento_encontrado = wait.until(
-            EC.presence_of_element_located((By.XPATH, xpath_combinado))
+        print("Busca concluída. Verificando o resultado...")
+        time.sleep(0.5) 
+        
+        wait_resultado = WebDriverWait(driver, 10) 
+        xpath_resultado = "//*[contains(text(), 'Arquivo não encontrado')] | //a[@permission='imagem']"
+        
+        elemento_encontrado = wait_resultado.until(
+            EC.presence_of_element_located((By.XPATH, xpath_resultado))
         )
+        
         if "Arquivo não encontrado" in elemento_encontrado.text:
-            print("FALHA: Mensagem 'Arquivo não encontrado.' detectada no LMS.")
+            print("AVISO: Mensagem 'Arquivo não encontrado.' detectada no LMS.")
             return []
 
         botao_imagem = elemento_encontrado
@@ -70,20 +78,20 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
         botao_imagem.click()
         print("Botão 'Imagem' clicado. Verificando o download do .zip...")
 
-        caminho_zip = verificar_novo_download(pasta_trabalho, timestamp_antes_do_clique)
+        caminho_zip = verificar_novo_download(pasta_trabalho, timestamp_antes_do_clique, timeout=20)
 
         if caminho_zip:
             return extrair_e_mover_pdfs_do_zip(caminho_zip, pasta_trabalho)
         else:
+            print(f"FALHA: Download do .zip não foi detectado para o CTE {cte}.")
             return []
 
     except TimeoutException:
-        print(f"FALHA: Não foi possível encontrar nem o botão 'Imagem' nem a mensagem de erro no LMS para o CTE {cte}.")
+        print(f"FALHA: Ocorreu um Timeout no LMS para o CTE {cte}. O loader pode não ter desaparecido ou o resultado não foi encontrado.")
         return []
     except Exception as e:
-        print(f"Ocorreu um erro ao consultar o CTE no LMS: {e}")
+        print(f"Ocorreu um erro inesperado ao consultar o CTE no LMS: {e}")
         return []
-
 
 def rerun_consulta(driver):
     elemento_consulta = wait_until_present(
