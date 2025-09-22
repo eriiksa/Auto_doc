@@ -11,7 +11,7 @@ A ferramenta foi criada para eliminar a necessidade de consultar manualmente cad
 * **Controle de Execução:** A interface permanece responsiva durante a automação, exibindo o status atual e permitindo que o usuário interrompa o processo a qualquer momento através do botão "Parar Automação".
 * **Executável Simples:** O projeto é compilado em um único arquivo `.exe` com PyInstaller, eliminando a necessidade de instalar Python ou qualquer biblioteca nas máquinas dos usuários.
 
-## 🚀 Como Usar (Versão `.exe`)
+## 🚀 Como Usar
 
 1.  **Primeiro Uso - Configuração:**
     * Ao abrir o aplicativo pela primeira vez, uma mensagem solicitará a configuração das credenciais.
