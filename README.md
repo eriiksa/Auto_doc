@@ -3,6 +3,7 @@ Este é um aplicativo de automação de processos (RPA) desenvolvido em Python p
 A ferramenta foi criada para eliminar a necessidade de consultar manualmente cada sistema, processando uma lista de documentos de forma automática e organizada.
 
 https://github.com/eriiksa/download_doc/releases/download/v1.0.0/Auto.doc.exe
+
 Para instalar, baixe o app e clique duas vezes no Auto doc.exe, em cerca de 20s ele abrirá e você pode seguir esse passo a passo.
 
 ## 🚀 Como Usar
