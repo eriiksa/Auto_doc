@@ -1,10 +1,10 @@
-Este é um aplicativo de automação de processos (RPA) desenvolvido em Python para otimizar e acelerar a busca e o download de documentos de transporte (como Conhecimentos de Transporte Eletrônico - CTEs) a partir de múltiplos portais web.
+Este é um aplicativo desenvolvido em Python para otimizar e acelerar a busca,o download de documentos de transporte (CTES) e renomeação dos arquivos pelo número da NF.
 
 A ferramenta foi criada para eliminar a necessidade de consultar manualmente cada sistema, processando uma lista de documentos de forma automática e organizada.
 
 https://github.com/eriiksa/download_doc/releases/download/v1.0.0/Auto.doc.exe
 
-Para instalar, baixe o app e clique duas vezes no Auto doc.exe, em cerca de 20s ele abrirá e você pode seguir esse passo a passo.
+Para instalar, baixe o app no link acima e clique duas vezes no Auto doc.exe, em cerca de 20s ele abrirá e você pode seguir esse passo a passo:
 
 ## 🚀 Como Usar
 
