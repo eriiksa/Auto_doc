@@ -17,8 +17,9 @@ def login_tivit(driver, user: str, pwd: str):
 
     utilidades.wait_until_present( driver, (By.ID, "txtCliente")).send_keys("TNT")
     utilidades.wait_until_present( driver, (By.ID, "txtUsuario")).send_keys(user)
-    time.sleep(.3)
+    time.sleep(.5)
     utilidades.wait_until_present(driver, (By.ID, "txtSenha")).send_keys(pwd)
+    time.sleep(.3)
     utilidades.wait_until_element_clickable(driver, (By.CSS_SELECTOR, "button.btn.btn-primary")).click()
 
     print("Login no Tivit realizado com sucesso.")

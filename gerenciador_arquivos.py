@@ -167,6 +167,7 @@ def renomear_pdf_pela_nf(caminho_do_pdf: str):
     finally:
         if doc:
             doc.close()
+    
 def baixar_pdf_de_url(url_pdf: str, pasta_destino: str, nome_arquivo_base: str) -> Optional[str]:
     """
     Baixa um arquivo PDF a partir de uma URL e o salva na pasta de destino.
@@ -196,3 +197,17 @@ def baixar_pdf_de_url(url_pdf: str, pasta_destino: str, nome_arquivo_base: str) 
     except requests.exceptions.RequestException as e:
         print(f"ERRO: Falha ao baixar o PDF da URL. Erro: {e}")
         return None
+    
+def salvar_lista_em_txt(lista_itens: List[str], pasta_destino: str, nome_arquivo: str):
+    """Salva uma lista de strings em um arquivo .txt, com um item por linha."""
+    if not lista_itens:
+        return # Não faz nada se a lista estiver vazia
+
+    caminho_completo = os.path.join(pasta_destino, nome_arquivo)
+    print(f"Salvando lista de CTEs não encontrados em: {caminho_completo}")
+    try:
+        with open(caminho_completo, 'w', encoding='utf-8') as f:
+            for item in lista_itens:
+                f.write(f"{item}\n")
+    except Exception as e:
+        print(f"Erro ao salvar o arquivo de log de CTEs não encontrados: {e}")

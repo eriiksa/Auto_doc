@@ -87,12 +87,22 @@ def run_automation_logic(ctes_raw, stop_event, status_queue, creds):
                 lms_logado = True
             else:
                 driver.switch_to.window(aba_lms); rerun_consulta(driver)
+            resultado_lms = consulta_lms(driver, cte_atual, PASTA_CTES)
             
-            caminhos_pdfs_lms = consulta_lms(driver, cte_atual, PASTA_CTES)
-            if caminhos_pdfs_lms:
-                for pdf_path in caminhos_pdfs_lms: gerenciador_arquivos.renomear_pdf_pela_nf(pdf_path)
-                time.sleep(1); continue
-
+            if resultado_lms == "TIMEOUT_CRASH":
+                status_queue.put("LMS travou. Fechando aba e redefinindo.")
+                driver.switch_to.window(aba_lms)
+                driver.close()
+                driver.switch_to.window(aba_enfase)
+                aba_lms = None
+                lms_logado = False
+            
+            elif isinstance(resultado_lms, list) and resultado_lms:
+                for pdf_path in resultado_lms: 
+                    gerenciador_arquivos.renomear_pdf_pela_nf(pdf_path)
+                time.sleep(1)
+                continue
+            
             if stop_event.is_set(): break
             status_queue.put(f"{cte_atual} não encontrado no LMS. Verificando Tivit...")
 
@@ -117,14 +127,18 @@ def run_automation_logic(ctes_raw, stop_event, status_queue, creds):
 
     except Exception as e:
         status_queue.put(f"ERRO FATAL: {e}")
+
     finally:
         if driver: driver.quit()
-        # Envia o resultado para a GUI processar
-        resultado_final = ":".join(ctes_nao_encontrados)
+
+        if ctes_nao_encontrados:
+            gerenciador_arquivos.salvar_lista_em_txt(ctes_nao_encontrados,PASTA_CTES,"ctes_nao_encontrados.txt")
+
+        resultado_final = ",".join(ctes_nao_encontrados)
         status_queue.put(f"RESULT:{resultado_final}")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     root = tk.Tk()
     app = AutomationGUI(root, start_callback=run_automation_logic)
     root.mainloop()

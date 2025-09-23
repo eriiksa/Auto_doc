@@ -150,9 +150,15 @@ class AutomationGUI:
         self.status_label.config(text="Status: Processo finalizado. Pronto para iniciar.")
 
     def show_result(self, ctes_nao_encontrados):
-        if not ctes_nao_encontrados: messagebox.showinfo("Processo Finalizado", "Todos os CTEs foram processados com sucesso!")
+        """Mostra o resultado final em uma caixa de mensagem."""
+        if not ctes_nao_encontrados or (len(ctes_nao_encontrados) == 1 and not ctes_nao_encontrados[0]):
+             messagebox.showinfo("Processo Finalizado", "Todos os CTEs foram processados com sucesso!")
         else:
             quantidade = len(ctes_nao_encontrados)
             termo_cte = "CTE não foi encontrado" if quantidade == 1 else "CTEs não foram encontrados"
-            mensagem = f"{quantidade} {termo_cte} para download:\n\n" + "\n".join([f" - {cte}" for cte in ctes_nao_encontrados])
+            
+            mensagem = f"{quantidade} {termo_cte} para download:\n\n"
+            mensagem += "\n".join([f" - {cte}" for cte in ctes_nao_encontrados])
+            mensagem += "\n\nUm arquivo de texto com a lista de ctes não econtrados está na pasta 'ctes' ."
+            
             messagebox.showwarning("Processo Finalizado com Avisos", mensagem)

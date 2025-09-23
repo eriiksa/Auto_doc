@@ -37,40 +37,48 @@ def consulta_sim(driver):
     consultar_localizacoes = wait_until_present(driver, (By.XPATH, "//a[contains(text(),'Consultar Localizações de Mercadoria (Novo)') ]"))
     consultar_localizacoes.click()
 
-
-def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
+def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str] | str: # O retorno pode ser lista ou string
     """
-    Busca o CTe no LMS, clica em Imagem, verifica o download do .zip,
-    extrai o PDF para a pasta de trabalho e retorna os caminhos dos PDFs.
+    Busca o CTe no LMS. Se o loader travar (timeout), retorna um sinal
+    de crash para que o main.py possa fechar a aba.
     """
     print(f"Consultando CTE {cte} no LMS...")
     try:
-        campo_docto = wait_until_element_clickable(
-            driver, (By.ID, "doctoServico"))
+        campo_docto = wait_until_element_clickable(driver, (By.ID, "doctoServico"))
         time.sleep(1)
-        campo_docto.send_keys(Keys.CONTROL + 'a')
-        campo_docto.send_keys(Keys.DELETE)
+        campo_docto.send_keys(Keys.CONTROL + 'a'); campo_docto.send_keys(Keys.DELETE) 
+        time.sleep(.5)
         campo_docto.send_keys(cte.replace("-", "").strip() + Keys.ENTER)
-        time.sleep(1)
+        
         wait_and_click(driver, (By.ID, "consultar"), timeout=15)
+        print("Aguardando a busca no LMS ser concluída...")
 
         XPATH_LOADER = "//img[@src='/lmsa/img/ajax-loader.gif']"
-        # Espera o loader por 90s
-        wait = WebDriverWait(driver, 90)
+        wait = WebDriverWait(driver, 30)
         wait.until(EC.invisibility_of_element_located((By.XPATH, XPATH_LOADER)))
-        
+
+    except TimeoutException:
+        print(f"ERRO CRÍTICO: LMS travou no CTE {cte}. A aba será reiniciada.")
+        return "TIMEOUT_CRASH"
+    
+    try:    
         print("Busca concluída. Verificando o resultado...")
         time.sleep(0.5) 
-        
         wait_resultado = WebDriverWait(driver, 10) 
-        xpath_resultado = "//*[contains(text(), 'Arquivo não encontrado')] | //a[@permission='imagem']"
+        
+        xpath_resultado = "//div[contains(@class, 'alert-danger')]//span[contains(text(), 'Arquivo não encontrado.')] | //a[@permission='imagem']"
         
         elemento_encontrado = wait_resultado.until(
             EC.presence_of_element_located((By.XPATH, xpath_resultado))
         )
-        
-        if "Arquivo não encontrado" in elemento_encontrado.text:
-            print("AVISO: Mensagem 'Arquivo não encontrado.' detectada no LMS.")
+
+        # Se o elemento encontrado for o SPAN do alerta de erro
+        if elemento_encontrado.tag_name == 'span':
+            print("AVISO: Alerta 'Arquivo não encontrado.' detectado no LMS.")
+            # Tenta fechar o alerta para não interferir na próxima consulta
+            close_button = driver.find_element(By.XPATH, "//div[contains(@class, 'alert-danger')]//button[@class='close']")
+            close_button.click()
+            time.sleep(1)
             return []
 
         botao_imagem = elemento_encontrado
@@ -85,10 +93,11 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str]:
         else:
             print(f"FALHA: Download do .zip não foi detectado para o CTE {cte}.")
             return []
-
+            
     except TimeoutException:
-        print(f"FALHA: Ocorreu um Timeout no LMS para o CTE {cte}. O loader pode não ter desaparecido ou o resultado não foi encontrado.")
+        print(f"FALHA: O resultado (botão Imagem ou alerta de erro) não foi encontrado após o carregamento para o CTE {cte}.")
         return []
+
     except Exception as e:
         print(f"Ocorreu um erro inesperado ao consultar o CTE no LMS: {e}")
         return []
