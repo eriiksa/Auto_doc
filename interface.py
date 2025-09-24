@@ -126,23 +126,37 @@ class AutomationGUI:
         threading.Thread(target=self.start_callback, args=(ctes_raw, self.stop_event, self.status_queue, creds)).start()
         self.root.after(100, self.check_queue)
     
-    # ... (o resto das funções: stop_automation, check_queue, reset_ui, show_result permanecem as mesmas de antes)
     def stop_automation(self):
         self.status_label.config(text="Status: Parando automação... Aguarde o CTE atual.")
         self.stop_event.set()
         self.stop_button.config(state=tk.DISABLED)
 
     def check_queue(self):
+        """Verifica a fila por novas mensagens e atualiza a GUI."""
         try:
             message = self.status_queue.get_nowait()
-            if message == "DONE": self.reset_ui()
+            
+            if message.startswith("PROCESSED_CTE:"):
+                # Se for uma mensagem de CTE processado, remove da lista
+                cte_to_remove = message.split(":", 1)[1]
+                self.remove_cte_from_textarea(cte_to_remove)
+            
+            elif message == "DONE":
+                self.reset_ui()
+
             elif message.startswith("RESULT"):
                 _, *data = message.split(":", 1)
                 ctes_nao_encontrados = data[0].split(',') if data and data[0] else []
-                self.reset_ui(); self.show_result(ctes_nao_encontrados)
-            else: self.status_label.config(text=f"Status: {message}")
-        except queue.Empty: pass
-        finally: self.root.after(100, self.check_queue)
+                self.reset_ui()
+                self.show_result(ctes_nao_encontrados)
+
+            else:
+                self.status_label.config(text=f"Status: {message}")
+
+        except queue.Empty:
+            pass # Fila vazia, não faz nada
+        finally:
+            self.root.after(100, self.check_queue)
 
     def reset_ui(self):
         self.start_button.config(state=tk.NORMAL); self.stop_button.config(state=tk.DISABLED)
@@ -162,3 +176,26 @@ class AutomationGUI:
             mensagem += "\n\nUm arquivo de texto com a lista de ctes não econtrados está na pasta 'ctes' ."
             
             messagebox.showwarning("Processo Finalizado com Avisos", mensagem)
+
+    def remove_cte_from_textarea(self, cte_to_remove):
+        """Encontra e remove uma linha de texto da caixa de texto principal."""
+        try:
+            # Habilita a edição temporariamente
+            self.text_area.config(state=tk.NORMAL)
+            
+            # Pega todo o conteúdo
+            content = self.text_area.get("1.0", tk.END)
+            lines = content.splitlines()
+            
+            # Cria uma nova lista de linhas, excluindo o CTE que foi processado
+            new_lines = [line for line in lines if cte_to_remove not in line]
+            
+            # Limpa a caixa de texto e insere o novo conteúdo
+            self.text_area.delete("1.0", tk.END)
+            self.text_area.insert("1.0", "\n".join(new_lines))
+
+        except Exception as e:
+            print(f"Erro ao remover linha da GUI: {e}")
+        finally:
+            # Desabilita a edição novamente
+            self.text_area.config(state=tk.DISABLED)

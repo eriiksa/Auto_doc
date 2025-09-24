@@ -1,4 +1,3 @@
-# main.py
 import os
 import re
 import time
@@ -63,71 +62,72 @@ def run_automation_logic(ctes_raw, stop_event, status_queue, creds):
         login_enfase(driver, user_enfase, pwd_enfase)
         
         for i, cte_atual in enumerate(lista_de_ctes):
-            if stop_event.is_set():
-                status_queue.put("Automação interrompida pelo usuário.")
-                break
-            
-            status_queue.put(f"Processando {i+1}/{len(lista_de_ctes)}: {cte_atual} no Enfase...")
-            driver.switch_to.window(aba_enfase)
-
-            if consulta_cte_enfase(driver, cte=cte_atual):
-                caminho_pdf = gerenciador_arquivos.encontrar_ultimo_pdf_baixado(PASTA_CTES)
-                if caminho_pdf: gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf)
-                time.sleep(1); continue
-
-            if stop_event.is_set(): break
-            status_queue.put(f"{cte_atual} não encontrado no Enfase. Verificando LMS...")
-            
-            if not aba_lms:
-                abas_antes = set(driver.window_handles); driver.execute_script("window.open('');")
-                aba_lms = (set(driver.window_handles) - abas_antes).pop()
-                driver.switch_to.window(aba_lms)
-                status_queue.put("Realizando login no LMS...")
-                login_lms(driver, user_lms, pwd_lms); consulta_sim(driver)
-                lms_logado = True
-            else:
-                driver.switch_to.window(aba_lms); rerun_consulta(driver)
-            resultado_lms = consulta_lms(driver, cte_atual, PASTA_CTES)
-            
-            if resultado_lms == "TIMEOUT_CRASH":
-                status_queue.put("LMS travou. Fechando aba e redefinindo.")
-                driver.switch_to.window(aba_lms)
-                driver.close()
+            try:
+                if stop_event.is_set():
+                    status_queue.put("Automação interrompida pelo usuário.")
+                    break
+                
+                status_queue.put(f"Processando {i+1}/{len(lista_de_ctes)}: {cte_atual} no Enfase...")
                 driver.switch_to.window(aba_enfase)
-                aba_lms = None
-                lms_logado = False
-            
-            elif isinstance(resultado_lms, list) and resultado_lms:
-                for pdf_path in resultado_lms: 
-                    gerenciador_arquivos.renomear_pdf_pela_nf(pdf_path)
+
+                if consulta_cte_enfase(driver, cte=cte_atual):
+                    caminho_pdf = gerenciador_arquivos.encontrar_ultimo_pdf_baixado(PASTA_CTES)
+                    if caminho_pdf: gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf)
+                    time.sleep(1); continue
+
+                if stop_event.is_set(): break
+                status_queue.put(f"{cte_atual} não encontrado no Enfase. Verificando LMS...")
+                
+                if not aba_lms:
+                    abas_antes = set(driver.window_handles); driver.execute_script("window.open('');")
+                    aba_lms = (set(driver.window_handles) - abas_antes).pop()
+                    driver.switch_to.window(aba_lms)
+                    status_queue.put("Realizando login no LMS...")
+                    login_lms(driver, user_lms, pwd_lms); consulta_sim(driver)
+                    lms_logado = True
+                else:
+                    driver.switch_to.window(aba_lms); rerun_consulta(driver)
+                
+                resultado_lms = consulta_lms(driver, cte_atual, PASTA_CTES)
+                
+                if resultado_lms == "TIMEOUT_CRASH":
+                    status_queue.put("LMS travou. Atualizando a página para a próxima tentativa.")
+                    driver.switch_to.window(aba_lms); driver.refresh(); time.sleep(2)
+                    driver.switch_to.window(aba_enfase)
+                
+                elif isinstance(resultado_lms, list) and resultado_lms:
+                    for pdf_path in resultado_lms: 
+                        gerenciador_arquivos.renomear_pdf_pela_nf(pdf_path)
+                    time.sleep(1); continue
+                
+                if stop_event.is_set(): break
+                status_queue.put(f"{cte_atual} não encontrado no LMS. Verificando Tivit...")
+
+                if not aba_tivit:
+                    abas_antes = set(driver.window_handles); driver.execute_script("window.open('');")
+                    aba_tivit = (set(driver.window_handles) - abas_antes).pop()
+                    driver.switch_to.window(aba_tivit)
+                    status_queue.put("Realizando login no Tivit...")
+                    login_tivit(driver, user_tivit, pwd_tivit); navegar_para_consulta_tivit(driver)
+                    tivit_logado = True
+                else:
+                    driver.switch_to.window(aba_tivit)
+
+                caminho_pdf_tivit = consulta_tivit(driver, cte_atual, PASTA_CTES)
+                if caminho_pdf_tivit:
+                    gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_tivit)
+                    time.sleep(1); continue
+
+                status_queue.put(f"ATENÇÃO: {cte_atual} não encontrado em nenhum sistema.")
+                ctes_nao_encontrados.append(cte_atual)
                 time.sleep(1)
-                continue
-            
-            if stop_event.is_set(): break
-            status_queue.put(f"{cte_atual} não encontrado no LMS. Verificando Tivit...")
 
-            if not aba_tivit:
-                abas_antes = set(driver.window_handles); driver.execute_script("window.open('');")
-                aba_tivit = (set(driver.window_handles) - abas_antes).pop()
-                driver.switch_to.window(aba_tivit)
-                status_queue.put("Realizando login no Tivit...")
-                login_tivit(driver, user_tivit, pwd_tivit); navegar_para_consulta_tivit(driver)
-                tivit_logado = True
-            else:
-                driver.switch_to.window(aba_tivit)
-
-            caminho_pdf_tivit = consulta_tivit(driver, cte_atual, PASTA_CTES)
-            if caminho_pdf_tivit:
-                gerenciador_arquivos.renomear_pdf_pela_nf(caminho_pdf_tivit)
-                time.sleep(1); continue
-
-            status_queue.put(f"ATENÇÃO: {cte_atual} não encontrado em nenhum sistema.")
-            ctes_nao_encontrados.append(cte_atual)
-            time.sleep(1)
+            finally:
+                if 'cte_atual' in locals(): 
+                    status_queue.put(f"PROCESSED_CTE:{cte_atual}")
 
     except Exception as e:
         status_queue.put(f"ERRO FATAL: {e}")
-
     finally:
         if driver: driver.quit()
 
@@ -136,7 +136,6 @@ def run_automation_logic(ctes_raw, stop_event, status_queue, creds):
 
         resultado_final = ",".join(ctes_nao_encontrados)
         status_queue.put(f"RESULT:{resultado_final}")
-
 
 if __name__ == "__main__":  
     root = tk.Tk()
