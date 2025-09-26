@@ -69,24 +69,12 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str] | str:
         
         print("Processamento finalizado. Verificando o resultado...")
 
-        # Verificar o resultado (Download OU Alerta)
-        caminho_zip = verificar_novo_download(pasta_trabalho, timestamp_antes_do_clique, timeout=3)
+        caminho_zip = verificar_novo_download(pasta_trabalho, timestamp_antes_do_clique, timeout=20)
         if caminho_zip:
             return extrair_e_mover_pdfs_do_zip(caminho_zip, pasta_trabalho)
         else:
-            xpath_alerta = "//div[contains(@class, 'alert-danger')]//span[contains(text(), 'Arquivo não encontrado.')]"
-            if utilidades.element_is_present(driver, (By.XPATH, xpath_alerta), timeout=2):
-                print("AVISO: Alerta 'Arquivo não encontrado.' detectado.")
-                try:
-                    close_button = driver.find_element(By.XPATH, "//div[contains(@class, 'alert-danger')]//button[@class='close']")
-                    close_button.click()
-                except Exception:
-                    pass
-                return []
-            else:
-                # Se nem o download nem o alerta foram encontrados, retorna falha.
-                print(f"FALHA: O loader desapareceu, mas o download do CTE {cte} não iniciou e nenhum alerta foi encontrado.")
-                return []
+            print(f"FALHA: Download do .zip não foi detectado para o CTE {cte}.")
+            return []
 
     except TimeoutException:
         print(f"ERRO CRÍTICO: LMS travou ou demorou demais no CTE {cte}. A aba será reiniciada.")
