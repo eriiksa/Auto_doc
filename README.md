@@ -2,9 +2,10 @@ Este é um aplicativo desenvolvido em Python para otimizar e acelerar a busca,o 
 
 A ferramenta foi criada para eliminar a necessidade de consultar manualmente cada sistema, processando uma lista de documentos de forma automática e organizada.
 
-https://github.com/eriiksa/download_doc/releases/download/v1.0.0/Auto.doc.exe
-
-Para instalar, baixe o app no link acima e clique duas vezes no Auto doc.exe, em cerca de 20s ele abrirá e você pode seguir esse passo a passo:
+## 💻 Instalação
+   https://github.com/eriiksa/Auto_doc/releases/download/v1.2.0/AutoDoc.exe
+   * Baixe o app pelo link acima e execute-o com um duplo clique, em cerca de 20s o app será iniciado.
+   * Caso haja alguma dificuldade com o download / instalação do app, me contate pelo teams: erik.sa@fedex.com
 
 ## 🚀 Como Usar
 
@@ -23,7 +24,7 @@ Para instalar, baixe o app no link acima e clique duas vezes no Auto doc.exe, em
 3.  **Resultados:**
     * Os documentos encontrados serão baixados e renomeados automaticamente.
     * Todos os arquivos serão salvos em uma pasta chamada **"ctes"**, localizada na sua Área de Trabalho (Desktop).
-    * Ao final do processo, uma mensagem exibirá um resumo dos documentos que não foram encontrados em nenhum dos portais.
+    * Ao final do processo, uma lista dos documentos que não foram baixados estarão em um .txt na pasta **"ctes"**
 
 ## 🛠️ Tecnologias Utilizadas
 
