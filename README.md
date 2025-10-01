@@ -1,4 +1,4 @@
-Este é um aplicativo desenvolvido em Python para otimizar e acelerar a busca,o download de documentos de transporte (CTES) e renomeação dos arquivos pelo número da NF.
+Este é um aplicativo desenvolvido em Python para otimizar e acelerar a busca, download de documentos de transporte (CTES) e renomeação dos arquivos pelo número da NF.
 
 A ferramenta foi criada para eliminar a necessidade de consultar manualmente cada sistema, processando uma lista de documentos de forma automática e organizada.
 
