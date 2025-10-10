@@ -69,7 +69,7 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str] | str:
         
         print("Processamento finalizado. Verificando o resultado...")
 
-        caminho_zip = verificar_novo_download(pasta_trabalho, timestamp_antes_do_clique, timeout=20)
+        caminho_zip = verificar_novo_download(pasta_trabalho, timestamp_antes_do_clique, timeout=10)
         if caminho_zip:
             return extrair_e_mover_pdfs_do_zip(caminho_zip, pasta_trabalho)
         else:
