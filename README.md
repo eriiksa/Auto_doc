@@ -3,7 +3,7 @@ Este é um aplicativo desenvolvido em Python para otimizar e acelerar a busca, d
 A ferramenta foi criada para eliminar a necessidade de consultar manualmente cada sistema, processando uma lista de documentos de forma automática e organizada.
 
 ## 💻 Instalação
-   https://github.com/eriiksa/Auto_doc/releases/download/v1.3.0/Auto.Doc.exe
+   https://github.com/eriiksa/Auto_doc/releases/download/v.14.0/Auto.Doc.exe
    * Baixe o app pelo link acima e execute-o com um duplo clique, em cerca de 20s o app será iniciado.
    * Caso haja alguma dificuldade com o download / instalação do app, me contate pelo teams: erik.sa@fedex.com
 
@@ -20,6 +20,7 @@ A ferramenta foi criada para eliminar a necessidade de consultar manualmente cad
     * Cole a lista de números de documentos no campo de texto. Eles podem ser separados por quebra de linha, espaço ou vírgula.
     * Clique no botão **"Iniciar Automação"**.
     * Acompanhe o progresso na barra de status na parte inferior da janela.
+    * Há uma caixinha na parte inferior app, deixa-la desmarcada fará com que a consulta seja mais rápida e as abas fiquem invisiveis. Deixa-la marcada incluirá o tivit na consulta e deixará a consulta mais lenta, mas as abas serão visíveis.
 
 3.  **Resultados:**
     * Os documentos encontrados serão baixados e renomeados automaticamente.
