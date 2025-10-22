@@ -15,7 +15,9 @@ from interface import AutomationGUI
 from utilidades import QueueLogger
 
 def login_enfase(driver, user_enfase, pwd_enfase):
-    driver.get("https://enfase.lac.fedex.com/enfaseweb/")
+    driver.get("https://enfase.lac.fedex.com/enfaseweb/Autenticacao/Entrar")
+    time.sleep(2)
+    driver.refresh()
     utilidades.wait_until_present(driver, (By.ID, "Login")).send_keys(user_enfase)
     driver.find_element(By.ID, "Password").send_keys(pwd_enfase + Keys.ENTER)
     utilidades.wait_and_click(driver, (By.XPATH, "//button[contains(text(),'Consulta')]"))
