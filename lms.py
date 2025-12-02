@@ -21,11 +21,10 @@ def login_lms(driver, user: str, pwd: str):
         driver, (By.XPATH, "//a[contains(., 'Eu concordo') and @href='#']"))
     wait_and_click(
         driver, (By.CSS_SELECTOR, ".btn.btn-primary.btn-lg[value='Entrar']"))
-    time.sleep(5)  # Espera a página carregar completamente
 
 def consulta_sim(driver):
     """Navega até a tela de consulta SIM no LMS."""
-    toggle_menu = wait_until_present(driver, (By.XPATH, "//button[@class='navbar-toggle' and contains(@ng-click, 'toggleMenu')]"), timeout=20)
+    toggle_menu = wait_until_present(driver, (By.XPATH, "//button[@class='navbar-toggle' and contains(@ng-click, 'toggleMenu')]"), timeout=45)
     print("Login no LMS realizado com sucesso.")
     toggle_menu.click()
 
@@ -50,7 +49,7 @@ def consulta_lms(driver, cte: str, pasta_trabalho: str) -> List[str] | str:
         campo_docto.send_keys(Keys.CONTROL + 'a'); campo_docto.send_keys(Keys.DELETE)
         campo_docto.send_keys(cte.replace("-", "").strip() + Keys.TAB)
         time.sleep(.5)
-        wait_and_click(driver, (By.ID, "consultar"), timeout=15)
+        wait_and_click(driver, (By.ID, "consultar"), timeout=25)
         print("Aguardando a busca inicial no LMS ser concluída...")
 
         XPATH_LOADER = "//img[@src='/lmsa/img/ajax-loader.gif']"

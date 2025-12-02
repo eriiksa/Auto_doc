@@ -36,11 +36,11 @@ def navegar_para_consulta_tivit(driver):
         xpath_link_final = "//*[@id='nav']/li[1]/ul/li[1]/ul/li[1]/a"
 
         wait.until(EC.element_to_be_clickable((By.XPATH, xpath_menu_pesquisa))).click()
-        time.sleep(.4)
+        time.sleep(.5)
         wait.until(EC.element_to_be_clickable((By.XPATH, xpath_submenu_ctrc))).click()
-        time.sleep(.4)
+        time.sleep(.5)
         wait.until(EC.element_to_be_clickable((By.XPATH, xpath_link_final))).click()
-        time.sleep(.4)
+        time.sleep(.5)
         print("Navegação para a tela de consulta de conhecimentos concluída.")
     except TimeoutException:
         print("FALHA: Não foi possível encontrar ou clicar em um dos elementos do menu de navegação.")
